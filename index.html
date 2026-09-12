@@ -73,7 +73,7 @@
   .stage-pin.is-done .stage-orb::after { content:'✓'; color:#fff; font-size:23px; font-weight:900; text-shadow:0 1px 5px #785216; }
   .stage-pin.is-current { width:184px; margin-left:-92px; }
   .stage-pin.is-current .stage-orb { width:58px; height:58px; border-width:4px; box-shadow:0 0 0 8px rgba(84,239,255,.20),0 0 29px #48f5ff; animation:map-pulse 1.6s ease-in-out infinite; }
-  .stage-pin.is-current .stage-name { margin-top:7px; padding:4px 8px; color:#06204b; background:#c6ffff; box-shadow:0 0 15px rgba(56,234,255,.85); font-size:12px; }
+  .stage-pin.is-current .stage-name { margin-top:7px; padding:4px 8px; color:#06204b; background:#c6ffff; box-shadow:0 0 15px rgba(56,234,255,.85); font-size:12px; text-shadow:none; }
   .stage-pin.is-current .stage-name::before { content:'いま ここ！　'; font-size:10px; }
   .stage-pin.is-locked { cursor:default; opacity:.58; }
   .stage-pin.is-locked .stage-orb { width:31px; height:31px; border-color:rgba(183,208,255,.68); background:rgba(21,42,93,.68); box-shadow:0 0 10px rgba(132,168,255,.35); }
@@ -636,7 +636,7 @@
       var sx = s.x - worldX;
       if (sx < -40 || sx > W + 40) continue;
       var fl = 0.85 + 0.15 * Math.sin(now * 2 + j);
-      drawStar(sx, s.y + Math.sin(now + j) * 4, vehW * 0.28 * fl);
+      drawStar(sx, s.y + Math.sin(now + j) * 4, vehW * 0.45 * fl);
     }
 
     // のりもの
