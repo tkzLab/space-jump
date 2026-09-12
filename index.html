@@ -55,6 +55,20 @@
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c9962a, 0 4px 10px rgba(0,0,0,.35); }
 
+  .stage-panel { width: min(100%, 520px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .stage-card {
+    min-height: 92px; padding: 12px 10px; border: 2px solid rgba(255,255,255,.45);
+    border-radius: 20px; background: linear-gradient(145deg, rgba(109,91,207,.88), rgba(47,32,119,.88));
+    color: #fff; font: inherit; text-align: left; cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 5px 0 rgba(20,12,65,.7);
+  }
+  .stage-card:last-child { grid-column: 1 / -1; }
+  .stage-card:active { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 2px 0 rgba(20,12,65,.7); }
+  .stage-num { display:block; color:#ffe473; font-size:13px; font-weight:800; letter-spacing:.08em; }
+  .stage-name { display:block; margin-top:3px; font-size:clamp(17px, 4.6vw, 22px); font-weight:800; }
+  .stage-note { display:block; margin-top:3px; font-size:12px; opacity:.88; }
+  .back-btn { border: 0; background: transparent; color:#fff; font:inherit; font-size:16px; font-weight:700; text-decoration:underline; cursor:pointer; }
+
   .stars { font-size: clamp(40px, 13vw, 72px); letter-spacing: 8px; line-height: 1; }
   .praise { font-size: clamp(22px, 6.5vw, 32px); font-weight: 800; text-shadow: 0 2px 0 #3b2ea0; }
   .result { font-size: clamp(15px, 4.5vw, 19px); opacity: .95; }
@@ -76,12 +90,13 @@
     text-shadow: 0 2px 4px rgba(0,0,0,.5);
   }
   #hud.hidden { display: none; }
+  #stageLabel { margin-right: 8px; font-size: .68em; opacity: .9; }
 </style>
 
 <div id="wrap">
   <canvas id="cv"></canvas>
 
-  <div id="hud" class="hidden">⭐ <span id="starcount">0</span></div>
+  <div id="hud" class="hidden"><span id="stageLabel"></span>⭐ <span id="starcount">0</span></div>
   <div id="hint" class="hint hidden">タップで ジャンプ！</div>
 
   <!-- スタートがめん -->
@@ -93,7 +108,15 @@
     </style>
     <div class="title">うちゅうドライブ</div>
     <div class="sub">タップで ジャンプして<br>ほしを あつめよう！</div>
-    <button id="startBtn" class="btn">スタート</button>
+    <button id="startBtn" class="btn">ステージを えらぶ</button>
+  </div>
+
+  <!-- ステージえらび -->
+  <div id="stageScreen" class="screen hidden">
+    <div class="title" style="font-size:clamp(28px,8vw,44px)">どこまで いく？</div>
+    <div class="sub">すきな ほしを えらんでね</div>
+    <div id="stagePanel" class="stage-panel"></div>
+    <button id="backBtn" class="back-btn">もどる</button>
   </div>
 
   <!-- おしまいがめん -->
@@ -102,6 +125,7 @@
     <div class="stars" id="starRating">⭐⭐⭐</div>
     <div class="result" id="resultText">ほしを あつめたよ</div>
     <button id="againBtn" class="btn">もういちど</button>
+    <button id="stagesBtn" class="back-btn">ステージを えらぶ</button>
   </div>
 </div>
 
@@ -114,6 +138,7 @@
   var wrap = document.getElementById("wrap");
 
   var startScreen = document.getElementById("startScreen");
+  var stageScreen = document.getElementById("stageScreen");
   var endScreen = document.getElementById("endScreen");
   var hud = document.getElementById("hud");
   var hint = document.getElementById("hint");
@@ -121,6 +146,8 @@
   var starRatingEl = document.getElementById("starRating");
   var praiseEl = document.getElementById("praise");
   var resultTextEl = document.getElementById("resultText");
+  var stageLabelEl = document.getElementById("stageLabel");
+  var stagePanel = document.getElementById("stagePanel");
 
   // ---- びょうがサイズ（Retina たいおう）----
   var W = 0, H = 0, DPR = 1;
@@ -148,7 +175,7 @@
   }
 
   // ---- ゲームじょうたい ----
-  var state = "start"; // start | play | end
+  var state = "start"; // start | stages | play | end
   var worldX = 0;      // すすんだ きょり（px）
   var goalX = 0;       // ゴールまでの きょり
   var speed = 0;       // px/s（よこスクロール）
@@ -165,29 +192,69 @@
   var tilt = 0;        // のりものの かたむき（つまづき えんしゅつ）
   var bgStars = [];    // せかいの ほしぞら（そうしょく）
   var wheelSpin = 0;
+  var currentStage = 0;
+  var stationImage = new Image();
+  stationImage.src = "assets/docking-station.png";
+  var roverImage = new Image();
+  roverImage.src = "assets/moon-rover.png";
+  var planetImage = new Image();
+  planetImage.src = "assets/ringed-planet.png";
+  var obstacleSheet = new Image();
+  obstacleSheet.src = "assets/obstacles-sheet.png";
 
-  // かんたんな けっていろんてき レベル（ほしのかずが きまる＝こうへいな ひょうか）
+  // すべてのコースは同じジャンプで遊べるよう、障害物の間隔を画面幅の倍率で定義する
+  var stageDefs = [
+    { name: "はじめての つき", note: "ゆっくり ジャンプ", speed: 0.39, sky: ["#041a34", "#0b3d66", "#325478"], planet: ["#36d7df", "#abf7ff"], course: [
+      ["rock", .08, .98, 1], ["crystal", .09, 1.10, 2], ["rock", .07, 1.05, 1], ["crystal", .09, 1.16, 2], ["rock", .08, 1.10, 1]
+    ]},
+    { name: "きらきら すいしょう", note: "ほしを たくさん", speed: 0.42, sky: ["#03172f", "#0a506e", "#277584"], planet: ["#45e9d2", "#cdffff"], course: [
+      ["crystal", .10, .90, 2], ["crystal", .12, .94, 2], ["rock", .08, 1.04, 2], ["crystal", .10, .92, 2], ["rock", .08, 1.06, 1], ["crystal", .12, .98, 2]
+    ]},
+    { name: "いんせき ロード", note: "リズムよく ぴょん", speed: 0.45, sky: ["#06132e", "#16476c", "#3b577c"], planet: ["#718fff", "#d0eaff"], course: [
+      ["rock", .09, .82, 1], ["rock", .08, .87, 2], ["crystal", .10, 1.01, 1], ["rock", .11, .90, 2], ["rock", .08, .88, 1], ["crystal", .11, 1.02, 2], ["rock", .09, .94, 1]
+    ]},
+    { name: "わくせいリング", note: "ながい うちゅうのたび", speed: 0.47, sky: ["#06162f", "#204f79", "#4b5585"], planet: ["#a488ff", "#f0c8ff"], course: [
+      ["crystal", .10, .84, 2], ["rock", .09, .91, 1], ["crystal", .12, .96, 2], ["rock", .10, .86, 2], ["crystal", .09, .98, 1], ["rock", .11, .89, 2], ["crystal", .11, .98, 2], ["rock", .09, 1.02, 1]
+    ]},
+    { name: "ステーション とうちゃく", note: "さいごの ぼうけん", speed: 0.48, sky: ["#03162d", "#125276", "#375c82"], planet: ["#74e5ff", "#e1ffff"], course: [
+      ["rock", .09, .84, 1], ["crystal", .11, .88, 2], ["rock", .10, .92, 2], ["crystal", .12, .93, 1], ["rock", .09, .86, 2], ["crystal", .10, .97, 2], ["rock", .11, .88, 1], ["crystal", .11, .96, 2], ["rock", .09, 1.04, 1]
+    ]}
+  ];
+
+  // コース作成時の取り違えを早く見つけるための安全チェック
+  function validateStageDefs() {
+    stageDefs.forEach(function (stage) {
+      if (!stage.name || !stage.course.length) throw new Error("ステージの設定がありません");
+      stage.course.forEach(function (piece) {
+        var isKnown = piece[0] === "rock" || piece[0] === "crystal";
+        if (!isKnown || piece[1] > 0.12 || piece[1] < 0.06 || piece[2] < 0.82 || piece[3] < 1 || piece[3] > 2) {
+          throw new Error("ステージのジャンプ設定が安全範囲外です");
+        }
+      });
+    });
+  }
+
+  // ステージごとの けっていろんてき レベル（ほしのかずが きまる＝こうへいな ひょうか）
   function buildLevel() {
     obstacles = [];
     stars = [];
-    var x = W * 1.1;                 // さいしょは すこし あけて
-    var gapMin = W * 0.62, gapMax = W * 0.92;
-    var seed = 12345;
+    var def = stageDefs[currentStage];
+    var x = W * 1.12;                // さいしょは すこし あけて
+    var seed = 12345 + currentStage * 997;
     function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
-    var count = 9;                 // しょうがいぶつの かず（1しゅう やく20びょう）
     // ほしの たかさ：ジャンプの アーチが かならず とおる バンド（とれる たかさ）
     var starLow = groundY - H * 0.20;
     var starHigh = groundY - H * 0.26;
-    for (var i = 0; i < count; i++) {
-      var type = rnd() < 0.5 ? "rock" : "crystal";
-      var h = (type === "rock" ? 0.07 : 0.10) * H + rnd() * H * 0.03;
+    for (var i = 0; i < def.course.length; i++) {
+      var piece = def.course[i];
+      var type = piece[0];
+      var h = piece[1] * H;
       var w = vehW * (type === "rock" ? 0.9 : 0.55);
       obstacles.push({ x: x, w: w, h: h, type: type, hit: false });
-      var gap = gapMin + rnd() * (gapMax - gapMin);
+      var gap = W * piece[2];
       // しょうがいぶつを こえた すぐ さきに ほし（ジャンプの アーチで とれる）
       stars.push({ x: x + w * 0.5 + gap * 0.14, y: starHigh, got: false });
-      // ときどき たいらな ところにも ひくめの ほし
-      if (rnd() < 0.55) {
+      if (piece[3] === 2) {
         stars.push({ x: x + w * 0.5 + gap * 0.55, y: starLow, got: false });
       }
       x += gap;
@@ -203,21 +270,49 @@
     }
   }
 
-  function startGame() {
+  function startGame(stageIndex) {
+    currentStage = stageIndex;
     computeLayout();
     buildLevel();
     worldX = 0;
-    speed = W * 0.45;      // すすむ はやさ
+    speed = W * stageDefs[currentStage].speed;
     vehY = 0; vehVy = 0; onGround = true;
     stumbleT = 0; tilt = 0;
     goalReached = false; arriveT = 0;
     state = "play";
     startScreen.classList.add("hidden");
+    stageScreen.classList.add("hidden");
     endScreen.classList.add("hidden");
     hud.classList.remove("hidden");
     starCountEl.textContent = "0";
+    stageLabelEl.textContent = "ステージ " + (currentStage + 1);
     hint.classList.remove("hidden");
     setTimeout(function () { hint.classList.add("hidden"); }, 2600);
+  }
+
+  function showStages() {
+    state = "stages";
+    startScreen.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    stageScreen.classList.remove("hidden");
+    hud.classList.add("hidden");
+    hint.classList.add("hidden");
+  }
+
+  function showStart() {
+    state = "start";
+    stageScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  }
+
+  function buildStageButtons() {
+    stageDefs.forEach(function (stage, index) {
+      var button = document.createElement("button");
+      button.className = "stage-card";
+      button.innerHTML = '<span class="stage-num">ステージ ' + (index + 1) + '</span><span class="stage-name">' + stage.name + '</span><span class="stage-note">' + stage.note + '</span>';
+      button.addEventListener("click", function () { startGame(index); });
+      stagePanel.appendChild(button);
+    });
   }
 
   function endGame() {
@@ -270,8 +365,10 @@
     jump();
   });
 
-  document.getElementById("startBtn").addEventListener("click", startGame);
-  document.getElementById("againBtn").addEventListener("click", startGame);
+  document.getElementById("startBtn").addEventListener("click", showStages);
+  document.getElementById("backBtn").addEventListener("click", showStart);
+  document.getElementById("againBtn").addEventListener("click", function () { startGame(currentStage); });
+  document.getElementById("stagesBtn").addEventListener("click", showStages);
 
   // ---- こうしん ----
   function update(dt) {
@@ -342,10 +439,11 @@
   // ---- びょうが ----
   function draw() {
     // そら（グラデーション）
+    var stage = stageDefs[currentStage];
     var g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#0a0836");
-    g.addColorStop(0.6, "#241a63");
-    g.addColorStop(1, "#3a2a72");
+    g.addColorStop(0, stage.sky[0]);
+    g.addColorStop(0.6, stage.sky[1]);
+    g.addColorStop(1, stage.sky[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
@@ -363,29 +461,30 @@
     ctx.globalAlpha = 1;
 
     // とおくの わくせい（そうしょく）
-    drawPlanet(W * 0.78 - (worldX * 0.05) % (W * 1.6), H * 0.22, 34, "#7d6bd6", "#a99be0");
+    drawPlanet(W * 0.78 - (worldX * 0.05) % (W * 1.6), H * 0.22, 34, stage.planet[0], stage.planet[1]);
 
     // じめん
     var gg = ctx.createLinearGradient(0, groundY, 0, H);
-    gg.addColorStop(0, "#5b3b7a");
-    gg.addColorStop(1, "#3a2154");
+    gg.addColorStop(0, "#173f66");
+    gg.addColorStop(0.18, "#245e7a");
+    gg.addColorStop(1, "#16324f");
     ctx.fillStyle = gg;
     ctx.fillRect(0, groundY, W, H - groundY);
     // じめんの ハイライト せん
     ctx.strokeStyle = "rgba(255,255,255,.18)";
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
-    // じめんの もよう（クレーターの てん）
-    ctx.fillStyle = "rgba(255,255,255,.08)";
+    // みずたまりの ような ひかり（あおみどりの つきの じめん）
+    ctx.fillStyle = "rgba(118,247,255,.14)";
     for (var d = 0; d < 8; d++) {
       var px = ((d * W * 0.31 - worldX * 0.6) % (W * 1.3));
       if (px < 0) px += W * 1.3;
-      ctx.beginPath(); ctx.ellipse(px, groundY + (H - groundY) * 0.45, 26, 9, 0, 0, 6.28); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(px, groundY + (H - groundY) * 0.45, 30, 5, 0, 0, 6.28); ctx.fill();
     }
 
     // ゴール（うちゅうステーション）
     var goalScreenX = goalX - worldX;
-    if (goalScreenX < W + 120) {
+    if (goalScreenX < W + 180) {
       drawGoal(goalScreenX, groundY);
     }
 
@@ -421,6 +520,10 @@
   }
 
   function drawPlanet(x, y, r, c1, c2) {
+    if (planetImage.complete && planetImage.naturalWidth) {
+      ctx.drawImage(planetImage, x - r * 2.2, y - r * 1.45, r * 4.4, r * 2.93);
+      return;
+    }
     var pg = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.2, x, y, r);
     pg.addColorStop(0, c1); pg.addColorStop(1, "#4b3a8f");
     ctx.fillStyle = pg;
@@ -430,6 +533,10 @@
   }
 
   function drawRock(x, gy, w, h) {
+    if (obstacleSheet.complete && obstacleSheet.naturalWidth) {
+      ctx.drawImage(obstacleSheet, 0, 120, 820, 767, x - w * 0.30, gy - h * 1.10, w * 1.6, h * 1.25);
+      return;
+    }
     ctx.fillStyle = "#8a7fb0";
     ctx.strokeStyle = "#c8bce8"; ctx.lineWidth = 3;
     ctx.beginPath();
@@ -443,6 +550,10 @@
   }
 
   function drawCrystal(x, gy, w, h) {
+    if (obstacleSheet.complete && obstacleSheet.naturalWidth) {
+      ctx.drawImage(obstacleSheet, 920, 0, 854, 887, x - w * 0.65, gy - h * 1.20, w * 2.2, h * 1.35);
+      return;
+    }
     ctx.fillStyle = "#5fe0d8";
     ctx.strokeStyle = "#c4fff9"; ctx.lineWidth = 3;
     ctx.beginPath();
@@ -460,20 +571,22 @@
 
   function drawGoal(x, gy) {
     ctx.save();
-    // ポール
-    ctx.strokeStyle = "#ffd54a"; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy - H * 0.28); ctx.stroke();
-    // ステーション（まる）
-    var cy = gy - H * 0.30;
-    var rg = ctx.createRadialGradient(x - 8, cy - 8, 6, x, cy, 30);
-    rg.addColorStop(0, "#fff2b0"); rg.addColorStop(1, "#ffb03a");
-    ctx.fillStyle = rg;
-    ctx.beginPath(); ctx.arc(x, cy, 26, 0, 6.28); ctx.fill();
-    ctx.strokeStyle = "#fff"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(x, cy, 40, 12, 0, 0, 6.28); ctx.stroke();
-    // フラッグ もじ
-    ctx.fillStyle = "#2a1a5e"; ctx.font = "800 16px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("ゴール", x, cy);
+    var w = Math.min(W * 0.55, H * 0.36);
+    var h = w * 1.103;
+    var pulse = 0.96 + Math.sin(performance.now() * 0.006) * 0.04;
+    ctx.globalAlpha = 0.24;
+    ctx.fillStyle = "#8ff7ff";
+    ctx.beginPath(); ctx.ellipse(x, gy - h * 0.43, w * 0.48 * pulse, h * 0.43 * pulse, 0, 0, 6.28); ctx.fill();
+    ctx.globalAlpha = 1;
+    if (stationImage.complete && stationImage.naturalWidth) {
+      ctx.drawImage(stationImage, x - w / 2, gy - h, w, h);
+    } else {
+      // 画像の読み込み中でも目的地だと分かる、簡易の発光ドック
+      ctx.fillStyle = "#6653b7";
+      ctx.beginPath(); ctx.arc(x, gy - h * 0.48, w * .35, Math.PI, 0); ctx.lineTo(x + w*.35, gy); ctx.lineTo(x-w*.35, gy); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "#86f8ff"; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(x, gy - h * .44, w * .20, 0, 6.28); ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -494,6 +607,14 @@
   }
 
   function drawVehicle(x, baseY, w, h, tl) {
+    if (roverImage.complete && roverImage.naturalWidth) {
+      ctx.save();
+      ctx.translate(x, baseY);
+      ctx.rotate(tl);
+      ctx.drawImage(roverImage, -w * 0.80, -h * 1.58, w * 1.60, h * 1.58);
+      ctx.restore();
+      return;
+    }
     ctx.save();
     ctx.translate(x, baseY);
     ctx.rotate(tl);
@@ -583,6 +704,8 @@
   }
 
   resize();
+  validateStageDefs();
+  buildStageButtons();
   buildLevel();   // スタートがめんの はいけい（ほしぞら）ように いちど つくる。ゴールは とおくで えがかれない
   requestAnimationFrame(frame);
 })();
