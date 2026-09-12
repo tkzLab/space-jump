@@ -54,19 +54,35 @@
     transition: transform .08s, box-shadow .08s;
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c9962a, 0 4px 10px rgba(0,0,0,.35); }
+  .btn:disabled { opacity: .62; cursor: wait; transform: none; box-shadow: 0 4px 0 #c9962a, 0 7px 14px rgba(0,0,0,.22); }
 
-  .stage-panel { width: min(100%, 520px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .stage-card {
-    min-height: 92px; padding: 12px 10px; border: 2px solid rgba(255,255,255,.45);
-    border-radius: 20px; background: linear-gradient(145deg, rgba(109,91,207,.88), rgba(47,32,119,.88));
-    color: #fff; font: inherit; text-align: left; cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 5px 0 rgba(20,12,65,.7);
-  }
-  .stage-card:last-child { grid-column: 1 / -1; }
-  .stage-card:active { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 2px 0 rgba(20,12,65,.7); }
-  .stage-num { display:block; color:#ffe473; font-size:13px; font-weight:800; letter-spacing:.08em; }
-  .stage-name { display:block; margin-top:3px; font-size:clamp(17px, 4.6vw, 22px); font-weight:800; }
-  .stage-note { display:block; margin-top:3px; font-size:12px; opacity:.88; }
+  /* ステージえらび：星雲をたどる こうろ */
+  .stage-screen { display:block; padding:0; background:linear-gradient(180deg, rgba(3,15,43,.60), rgba(3,15,43,.18) 36%, rgba(3,15,43,.58)); }
+  .stage-screen .back-btn { position:absolute; z-index:5; top:20px; left:16px; }
+  .map-heading { position:absolute; z-index:3; top:22px; left:0; right:0; text-align:center; text-shadow:0 2px 9px #06122e; }
+  .map-heading .map-title { font-size:clamp(25px,7.5vw,39px); font-weight:800; letter-spacing:.12em; }
+  .map-heading .map-sub { margin-top:4px; color:#c9ffff; font-size:clamp(12px,3.5vw,15px); font-weight:700; }
+  .stage-panel { position:absolute; inset:98px 0 60px; overflow:hidden; }
+  .map-route { position:absolute; inset:0; width:100%; height:100%; }
+  .map-route .route-base { fill:none; stroke:rgba(116,237,255,.19); stroke-width:4.2; stroke-linecap:round; }
+  .map-route .route-lit { fill:none; stroke:#7cf9ff; stroke-width:1.05; stroke-linecap:round; filter:drop-shadow(0 0 4px #48eaff); }
+  .stage-pin { position:absolute; z-index:2; width:108px; margin-left:-54px; transform:translateY(-50%); border:0; background:transparent; color:#fff; font:inherit; text-align:center; cursor:pointer; }
+  .stage-orb { display:grid; place-items:center; width:38px; height:38px; margin:auto; border:3px solid #a9ffff; border-radius:50%; background:radial-gradient(circle at 36% 28%,#fff 0 4%,#70f6fb 10%,#168aa8 39%,#293c8c 78%); box-shadow:0 0 0 5px rgba(62,230,255,.14),0 0 19px #45eaff; }
+  .stage-pin .stage-name { display:block; margin-top:5px; padding:2px 5px; border-radius:999px; background:rgba(5,20,53,.34); font-size:12px; font-weight:800; line-height:1.2; text-shadow:0 2px 4px #06122e; white-space:nowrap; }
+  .stage-pin.is-done .stage-orb { border-color:#ffe996; background:radial-gradient(circle at 36% 28%,#fffbd8 0 8%,#ffe06b 12%,#d89b27 47%,#6b4d91 82%); box-shadow:0 0 0 5px rgba(255,216,99,.13),0 0 16px #ffdf69; }
+  .stage-pin.is-done .stage-orb::after { content:'✓'; color:#fff; font-size:23px; font-weight:900; text-shadow:0 1px 5px #785216; }
+  .stage-pin.is-current { width:184px; margin-left:-92px; }
+  .stage-pin.is-current .stage-orb { width:58px; height:58px; border-width:4px; box-shadow:0 0 0 8px rgba(84,239,255,.20),0 0 29px #48f5ff; animation:map-pulse 1.6s ease-in-out infinite; }
+  .stage-pin.is-current .stage-name { margin-top:7px; padding:4px 8px; color:#06204b; background:#c6ffff; box-shadow:0 0 15px rgba(56,234,255,.85); font-size:12px; }
+  .stage-pin.is-current .stage-name::before { content:'いま ここ！　'; font-size:10px; }
+  .stage-pin.is-locked { cursor:default; opacity:.58; }
+  .stage-pin.is-locked .stage-orb { width:31px; height:31px; border-color:rgba(183,208,255,.68); background:rgba(21,42,93,.68); box-shadow:0 0 10px rgba(132,168,255,.35); }
+  .stage-pin.is-locked .stage-orb::after { content:'🔒'; font-size:13px; filter:grayscale(1) brightness(1.7); }
+  .stage-pin:focus-visible { outline:3px solid #fff; outline-offset:4px; border-radius:50%; }
+  .map-key { position:absolute; z-index:3; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:11px; width:max-content; max-width:calc(100% - 32px); padding:8px 12px; border:1px solid rgba(169,246,255,.27); border-radius:14px; background:rgba(4,19,53,.55); color:#e6fbff; font-size:11px; font-weight:700; backdrop-filter:blur(6px); }
+  .map-key span { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }.map-key i { width:8px; height:8px; border-radius:50%; }.map-key .done-key{background:#ffd765}.map-key .current-key{background:#65f6ff}.map-key .locked-key{background:#7890bd}
+  @keyframes map-pulse { 50% { transform:scale(1.08); filter:brightness(1.16); } }
+  @media (prefers-reduced-motion:reduce) { .stage-pin.is-current .stage-orb { animation:none; } }
   .back-btn { border: 0; background: transparent; color:#fff; font:inherit; font-size:16px; font-weight:700; text-decoration:underline; cursor:pointer; }
 
   .stars { font-size: clamp(40px, 13vw, 72px); letter-spacing: 8px; line-height: 1; }
@@ -97,7 +113,7 @@
   <canvas id="cv"></canvas>
 
   <div id="hud" class="hidden"><span id="stageLabel"></span>⭐ <span id="starcount">0</span></div>
-  <div id="hint" class="hint hidden">タップで ジャンプ！</div>
+  <div id="hint" class="hint hidden">タップで 2だんジャンプ！</div>
 
   <!-- スタートがめん -->
   <div id="startScreen" class="screen">
@@ -108,14 +124,14 @@
     </style>
     <div class="title">うちゅうドライブ</div>
     <div class="sub">タップで ジャンプして<br>ほしを あつめよう！</div>
-    <button id="startBtn" class="btn">ステージを えらぶ</button>
+    <button id="startBtn" class="btn" disabled>よみこみちゅう…</button>
   </div>
 
   <!-- ステージえらび -->
-  <div id="stageScreen" class="screen hidden">
-    <div class="title" style="font-size:clamp(28px,8vw,44px)">どこまで いく？</div>
-    <div class="sub">すきな ほしを えらんでね</div>
+  <div id="stageScreen" class="screen stage-screen hidden">
+    <div class="map-heading"><div class="map-title">ほしの こうろ</div><div class="map-sub">つぎの ドッキングポイントへ</div></div>
     <div id="stagePanel" class="stage-panel"></div>
+    <div class="map-key"><span><i class="done-key"></i>とうちゃく</span><span><i class="current-key"></i>つぎの ばしょ</span><span><i class="locked-key"></i>そのさき</span></div>
     <button id="backBtn" class="back-btn">もどる</button>
   </div>
 
@@ -124,8 +140,9 @@
     <div class="praise" id="praise">とうちゃく！</div>
     <div class="stars" id="starRating">⭐⭐⭐</div>
     <div class="result" id="resultText">ほしを あつめたよ</div>
-    <button id="againBtn" class="btn">もういちど</button>
+    <button id="nextBtn" class="btn">つぎの ステージ</button>
     <button id="stagesBtn" class="back-btn">ステージを えらぶ</button>
+    <button id="endBtn" class="back-btn">おわる</button>
   </div>
 </div>
 
@@ -148,6 +165,7 @@
   var resultTextEl = document.getElementById("resultText");
   var stageLabelEl = document.getElementById("stageLabel");
   var stagePanel = document.getElementById("stagePanel");
+  var startBtn = document.getElementById("startBtn");
 
   // ---- びょうがサイズ（Retina たいおう）----
   var W = 0, H = 0, DPR = 1;
@@ -182,6 +200,7 @@
   var vehY = 0;        // じめんからの たかさ（px, +でうえ）
   var vehVy = 0;
   var onGround = true;
+  var jumpsUsed = 0;   // ちゃくちするまでの ジャンプかいすう（2かいまで）
   var stumbleT = 0;    // つまづき ざんり じかん
   var obstacles = [];  // {x, w, h, type, hit}
   var stars = [];      // {x, y, got}
@@ -191,8 +210,8 @@
   var arriveT = 0;     // ゴールえんしゅつ じかん
   var tilt = 0;        // のりものの かたむき（つまづき えんしゅつ）
   var bgStars = [];    // せかいの ほしぞら（そうしょく）
-  var wheelSpin = 0;
   var currentStage = 0;
+  var stageProgress = { highestUnlocked: 0, completed: [] };
   var stationImage = new Image();
   stationImage.src = "assets/docking-station.png";
   var roverImage = new Image();
@@ -203,6 +222,37 @@
   obstacleSheet.src = "assets/obstacles-sheet.png";
   var stageBackground = new Image();
   stageBackground.src = "assets/moon-stage-background.png";
+  var collectibleStarImage = new Image();
+  collectibleStarImage.src = "assets/collectible-star.png";
+  var imageAssets = [stationImage, roverImage, planetImage, obstacleSheet, stageBackground, collectibleStarImage];
+  var assetsReady = false;
+  var assetsFailed = false;
+
+  // あたらしい えを ぜんぶ よみこんでから はじめる。よみこみ中に ふるい代替えが出ないようにする
+  function prepareAssets() {
+    var remaining = imageAssets.length;
+    function finish() {
+      remaining--;
+      if (remaining === 0 && !assetsFailed) {
+        assetsReady = true;
+        startBtn.disabled = false;
+        startBtn.textContent = "ステージを えらぶ";
+      }
+    }
+    function failed() {
+      if (assetsFailed) return;
+      assetsFailed = true;
+      startBtn.textContent = "よみこみ できなかったよ";
+    }
+    imageAssets.forEach(function (image) {
+      if (image.complete) {
+        if (image.naturalWidth) finish(); else failed();
+      } else {
+        image.addEventListener("load", finish, { once: true });
+        image.addEventListener("error", failed, { once: true });
+      }
+    });
+  }
 
   // すべてのコースは同じジャンプで遊べるよう、障害物の間隔を画面幅の倍率で定義する
   var stageDefs = [
@@ -222,6 +272,26 @@
       ["rock", .09, .84, 1], ["crystal", .11, .88, 2], ["rock", .10, .92, 2], ["crystal", .12, .93, 1], ["rock", .09, .86, 2], ["crystal", .10, .97, 2], ["rock", .11, .88, 1], ["crystal", .11, .96, 2], ["rock", .09, 1.04, 1]
     ]}
   ];
+
+  // つぎの ばしょを ひらく きろく。おなじ たんまつでは、つづきから たびを できる。
+  function loadStageProgress() {
+    try {
+      var saved = JSON.parse(localStorage.getItem("spaceJumpProgressV1"));
+      if (!saved || !Array.isArray(saved.completed)) return;
+      stageProgress.highestUnlocked = Math.max(0, Math.min(stageDefs.length - 1, Number(saved.highestUnlocked) || 0));
+      stageProgress.completed = saved.completed.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < stageDefs.length; });
+    } catch (e) {}
+  }
+
+  function saveStageProgress() {
+    try { localStorage.setItem("spaceJumpProgressV1", JSON.stringify(stageProgress)); } catch (e) {}
+  }
+
+  function completeStage(index) {
+    if (stageProgress.completed.indexOf(index) === -1) stageProgress.completed.push(index);
+    if (index < stageDefs.length - 1) stageProgress.highestUnlocked = Math.max(stageProgress.highestUnlocked, index + 1);
+    saveStageProgress();
+  }
 
   // コース作成時の取り違えを早く見つけるための安全チェック
   function validateStageDefs() {
@@ -273,12 +343,14 @@
   }
 
   function startGame(stageIndex) {
+    if (!assetsReady) return;
+    if (stageIndex > stageProgress.highestUnlocked) return;
     currentStage = stageIndex;
     computeLayout();
     buildLevel();
     worldX = 0;
     speed = W * stageDefs[currentStage].speed;
-    vehY = 0; vehVy = 0; onGround = true;
+    vehY = 0; vehVy = 0; onGround = true; jumpsUsed = 0;
     stumbleT = 0; tilt = 0;
     goalReached = false; arriveT = 0;
     state = "play";
@@ -293,25 +365,50 @@
   }
 
   function showStages() {
+    if (!assetsReady) return;
     state = "stages";
     startScreen.classList.add("hidden");
     endScreen.classList.add("hidden");
     stageScreen.classList.remove("hidden");
     hud.classList.add("hidden");
     hint.classList.add("hidden");
+    renderStageMap();
   }
 
   function showStart() {
     state = "start";
     stageScreen.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    hud.classList.add("hidden");
+    hint.classList.add("hidden");
     startScreen.classList.remove("hidden");
   }
 
+  function goNextStage() {
+    startGame(currentStage < stageDefs.length - 1 ? currentStage + 1 : 0);
+  }
+
   function buildStageButtons() {
+    renderStageMap();
+  }
+
+  function renderStageMap() {
+    var pinPositions = [
+      { x: 70, y: 85 }, { x: 37, y: 65 }, { x: 63, y: 48 }, { x: 35, y: 30 }, { x: 64, y: 14 }
+    ];
+    var progressPaths = ["", "M70 85 C70 75 37 76 37 65", "M70 85 C70 75 37 76 37 65 C37 56 63 57 63 48", "M70 85 C70 75 37 76 37 65 C37 56 63 57 63 48 C63 39 35 40 35 30", "M70 85 C70 75 37 76 37 65 C37 56 63 57 63 48 C63 39 35 40 35 30 C35 21 64 22 64 14"];
+    stagePanel.innerHTML = '<svg class="map-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="route-base" d="M70 85 C70 75 37 76 37 65 C37 56 63 57 63 48 C63 39 35 40 35 30 C35 21 64 22 64 14"/><path class="route-lit" d="' + progressPaths[stageProgress.highestUnlocked] + '"/></svg>';
     stageDefs.forEach(function (stage, index) {
       var button = document.createElement("button");
-      button.className = "stage-card";
-      button.innerHTML = '<span class="stage-num">ステージ ' + (index + 1) + '</span><span class="stage-name">' + stage.name + '</span><span class="stage-note">' + stage.note + '</span>';
+      var isDone = stageProgress.completed.indexOf(index) !== -1;
+      var isCurrent = !isDone && index === stageProgress.highestUnlocked;
+      var isUnlocked = index <= stageProgress.highestUnlocked;
+      button.className = "stage-pin" + (isDone ? " is-done" : isCurrent ? " is-current" : " is-locked");
+      button.style.left = pinPositions[index].x + "%";
+      button.style.top = pinPositions[index].y + "%";
+      button.disabled = !isUnlocked;
+      button.setAttribute("aria-label", "ステージ " + (index + 1) + "　" + stage.name + (isDone ? "　とうちゃく" : isCurrent ? "　つぎの ばしょ" : "　まだ いけない"));
+      button.innerHTML = '<span class="stage-orb"></span><span class="stage-name">' + stage.name + '</span>';
       button.addEventListener("click", function () { startGame(index); });
       stagePanel.appendChild(button);
     });
@@ -321,6 +418,7 @@
     state = "end";
     hud.classList.add("hidden");
     hint.classList.add("hidden");
+    completeStage(currentStage);
     // こうへいな ひょうか：あつめた ほし ÷ でた ほし
     var ratio = totalStars > 0 ? gotStars / totalStars : 1;
     var rating, praise;
@@ -332,6 +430,7 @@
     starRatingEl.textContent = full + empty;
     praiseEl.textContent = praise;
     resultTextEl.textContent = "ほしを " + gotStars + "こ あつめたよ！　よく がんばったね";
+    document.getElementById("nextBtn").textContent = currentStage < stageDefs.length - 1 ? "つぎの ステージ" : "さいしょの ステージへ";
     endScreen.classList.remove("hidden");
     beep(660, 0.12, 0.0); beep(880, 0.14, 0.12); beep(1180, 0.18, 0.26);
   }
@@ -355,11 +454,11 @@
   // ---- そうさ：タップで ジャンプ ----
   function jump() {
     if (state !== "play") return;
-    if (onGround) {
-      vehVy = jumpV;
-      onGround = false;
-      beep(520, 0.10, 0);
-    }
+    if (jumpsUsed >= 2) return;
+    vehVy = jumpV;
+    onGround = false;
+    jumpsUsed++;
+    beep(jumpsUsed === 1 ? 520 : 700, 0.10, 0);
   }
   wrap.addEventListener("pointerdown", function (e) {
     // ボタンの タップは のぞく
@@ -369,8 +468,9 @@
 
   document.getElementById("startBtn").addEventListener("click", showStages);
   document.getElementById("backBtn").addEventListener("click", showStart);
-  document.getElementById("againBtn").addEventListener("click", function () { startGame(currentStage); });
+  document.getElementById("nextBtn").addEventListener("click", goNextStage);
   document.getElementById("stagesBtn").addEventListener("click", showStages);
+  document.getElementById("endBtn").addEventListener("click", showStart);
 
   // ---- こうしん ----
   function update(dt) {
@@ -378,12 +478,14 @@
 
     var curSpeed = speed * (stumbleT > 0 ? 0.45 : 1);
     worldX += curSpeed * dt;
-    wheelSpin += curSpeed * dt * 0.06;
 
     // ジャンプ ぶつり
     vehVy += gravity * dt;
     vehY -= vehVy * dt;
-    if (vehY <= 0) { vehY = 0; vehVy = 0; onGround = true; }
+    if (vehY <= 0) {
+      vehY = 0; vehVy = 0; onGround = true;
+      jumpsUsed = 0;
+    }
 
     if (stumbleT > 0) { stumbleT -= dt; tilt = Math.sin(performance.now() * 0.03) * 0.18; }
     else { tilt *= 0.8; }
@@ -440,6 +542,11 @@
 
   // ---- びょうが ----
   function draw() {
+    if (!assetsReady) {
+      ctx.fillStyle = "#071b38";
+      ctx.fillRect(0, 0, W, H);
+      return;
+    }
     // そら（幻想的な あおみどりの つきの よる）
     var stage = stageDefs[currentStage];
     if (stageBackground.complete && stageBackground.naturalWidth) {
@@ -479,10 +586,6 @@
     ctx.globalAlpha = 1;
 
     // とおくの わくせい（そうしょく）
-    if (!(stageBackground.complete && stageBackground.naturalWidth)) {
-      drawPlanet(W * 0.78 - (worldX * 0.05) % (W * 1.6), H * 0.22, 34, stage.planet[0], stage.planet[1]);
-    }
-
     // じめん
     var gg = ctx.createLinearGradient(0, groundY, 0, H);
     gg.addColorStop(0, "rgba(7,25,55,.92)");
@@ -533,7 +636,7 @@
       var sx = s.x - worldX;
       if (sx < -40 || sx > W + 40) continue;
       var fl = 0.85 + 0.15 * Math.sin(now * 2 + j);
-      drawStar(sx, s.y + Math.sin(now + j) * 4, vehW * 0.28 * fl, "#ffe14d");
+      drawStar(sx, s.y + Math.sin(now + j) * 4, vehW * 0.28 * fl);
     }
 
     // のりもの
@@ -548,54 +651,12 @@
     }
   }
 
-  function drawPlanet(x, y, r, c1, c2) {
-    if (planetImage.complete && planetImage.naturalWidth) {
-      ctx.drawImage(planetImage, x - r * 2.2, y - r * 1.45, r * 4.4, r * 2.93);
-      return;
-    }
-    var pg = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.2, x, y, r);
-    pg.addColorStop(0, c1); pg.addColorStop(1, "#4b3a8f");
-    ctx.fillStyle = pg;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.28); ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.ellipse(x, y, r * 1.5, r * 0.4, -0.4, 0, 6.28); ctx.stroke();
-  }
-
   function drawRock(x, gy, w, h) {
-    if (obstacleSheet.complete && obstacleSheet.naturalWidth) {
-      ctx.drawImage(obstacleSheet, 0, 120, 820, 767, x - w * 0.30, gy - h * 1.10, w * 1.6, h * 1.25);
-      return;
-    }
-    ctx.fillStyle = "#8a7fb0";
-    ctx.strokeStyle = "#c8bce8"; ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(x, gy);
-    ctx.lineTo(x + w * 0.15, gy - h * 0.75);
-    ctx.lineTo(x + w * 0.5, gy - h);
-    ctx.lineTo(x + w * 0.85, gy - h * 0.65);
-    ctx.lineTo(x + w, gy);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
+    ctx.drawImage(obstacleSheet, 0, 120, 820, 767, x - w * 0.30, gy - h * 1.10, w * 1.6, h * 1.25);
   }
 
   function drawCrystal(x, gy, w, h) {
-    if (obstacleSheet.complete && obstacleSheet.naturalWidth) {
-      ctx.drawImage(obstacleSheet, 920, 0, 854, 887, x - w * 0.65, gy - h * 1.20, w * 2.2, h * 1.35);
-      return;
-    }
-    ctx.fillStyle = "#5fe0d8";
-    ctx.strokeStyle = "#c4fff9"; ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(x + w * 0.5, gy - h);
-    ctx.lineTo(x + w, gy - h * 0.4);
-    ctx.lineTo(x + w * 0.7, gy);
-    ctx.lineTo(x + w * 0.3, gy);
-    ctx.lineTo(x, gy - h * 0.4);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
-    ctx.globalAlpha = 0.5; ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.moveTo(x + w * 0.5, gy - h); ctx.lineTo(x + w * 0.62, gy - h * 0.45); ctx.lineTo(x + w * 0.5, gy - h * 0.2); ctx.closePath(); ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.drawImage(obstacleSheet, 920, 0, 854, 887, x - w * 0.65, gy - h * 1.20, w * 2.2, h * 1.35);
   }
 
   function drawGoal(x, gy) {
@@ -607,118 +668,25 @@
     ctx.fillStyle = "#8ff7ff";
     ctx.beginPath(); ctx.ellipse(x, gy - h * 0.43, w * 0.48 * pulse, h * 0.43 * pulse, 0, 0, 6.28); ctx.fill();
     ctx.globalAlpha = 1;
-    if (stationImage.complete && stationImage.naturalWidth) {
-      ctx.drawImage(stationImage, x - w / 2, gy - h, w, h);
-    } else {
-      // 画像の読み込み中でも目的地だと分かる、簡易の発光ドック
-      ctx.fillStyle = "#6653b7";
-      ctx.beginPath(); ctx.arc(x, gy - h * 0.48, w * .35, Math.PI, 0); ctx.lineTo(x + w*.35, gy); ctx.lineTo(x-w*.35, gy); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = "#86f8ff"; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.arc(x, gy - h * .44, w * .20, 0, 6.28); ctx.stroke();
-    }
+    ctx.drawImage(stationImage, x - w / 2, gy - h, w, h);
     ctx.restore();
   }
 
-  function drawStar(cx, cy, r, color) {
+  function drawStar(cx, cy, r) {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.fillStyle = color;
-    ctx.strokeStyle = "#fff6c0"; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (var i = 0; i < 5; i++) {
-      var a = -Math.PI / 2 + i * (Math.PI * 2 / 5);
-      var a2 = a + Math.PI / 5;
-      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-      ctx.lineTo(Math.cos(a2) * r * 0.45, Math.sin(a2) * r * 0.45);
-    }
-    ctx.closePath(); ctx.fill(); ctx.stroke();
+    var w = r * 2.45;
+    var h = w * (collectibleStarImage.naturalHeight / collectibleStarImage.naturalWidth);
+    ctx.drawImage(collectibleStarImage, -w / 2, -h / 2, w, h);
     ctx.restore();
   }
 
   function drawVehicle(x, baseY, w, h, tl) {
-    if (roverImage.complete && roverImage.naturalWidth) {
-      ctx.save();
-      ctx.translate(x, baseY);
-      ctx.rotate(tl);
-      ctx.drawImage(roverImage, -w * 0.80, -h * 1.58, w * 1.60, h * 1.58);
-      ctx.restore();
-      return;
-    }
     ctx.save();
     ctx.translate(x, baseY);
     ctx.rotate(tl);
-
-    var bodyW = w, bodyH = h * 0.55;
-    var by = -bodyH - h * 0.18; // ボディの うえ y（したが -h*0.18 に くる）
-
-    // かげ
-    ctx.globalAlpha = 0.28; ctx.fillStyle = "#000";
-    ctx.beginPath(); ctx.ellipse(0, 2, w * 0.5, 6, 0, 0, 6.28); ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // ロケットの ほのお（すすんでいる かんじ）
-    var flick = 0.7 + Math.random() * 0.3;
-    ctx.fillStyle = "#ff8a3c";
-    ctx.beginPath();
-    ctx.moveTo(-bodyW * 0.5, -h * 0.42);
-    ctx.lineTo(-bodyW * 0.5 - w * 0.28 * flick, -h * 0.30);
-    ctx.lineTo(-bodyW * 0.5, -h * 0.18);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#ffd84a";
-    ctx.beginPath();
-    ctx.moveTo(-bodyW * 0.5, -h * 0.40);
-    ctx.lineTo(-bodyW * 0.5 - w * 0.16 * flick, -h * 0.30);
-    ctx.lineTo(-bodyW * 0.5, -h * 0.20);
-    ctx.closePath(); ctx.fill();
-
-    // タイヤ
-    ctx.fillStyle = "#2b2350";
-    var wheelR = h * 0.22;
-    var wy = -wheelR * 0.7;
-    drawWheel(-bodyW * 0.28, wy, wheelR);
-    drawWheel(bodyW * 0.30, wy, wheelR);
-
-    // ボディ（まるっこい）
-    var bg = ctx.createLinearGradient(0, by, 0, by + bodyH);
-    bg.addColorStop(0, "#ff6f9c"); bg.addColorStop(1, "#e23f78");
-    ctx.fillStyle = bg;
-    roundRect(-bodyW * 0.5, by, bodyW, bodyH, bodyH * 0.4);
-    ctx.fill();
-
-    // まど（ドーム）
-    ctx.fillStyle = "#bfe9ff";
-    ctx.beginPath();
-    ctx.ellipse(bodyW * 0.08, by + bodyH * 0.30, bodyW * 0.24, bodyH * 0.42, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
-    // ほし マーク
+    ctx.drawImage(roverImage, -w * 0.80, -h * 1.58, w * 1.60, h * 1.58);
     ctx.restore();
-
-    // タイヤの ぐるぐる（べつ ざひょうで）
-    function drawWheel(wx, wyy, r) {
-      ctx.save();
-      ctx.fillStyle = "#241d45";
-      ctx.beginPath(); ctx.arc(wx, wyy, r, 0, 6.28); ctx.fill();
-      ctx.fillStyle = "#8f86c0";
-      ctx.beginPath(); ctx.arc(wx, wyy, r * 0.45, 0, 6.28); ctx.fill();
-      ctx.strokeStyle = "#5b5290"; ctx.lineWidth = 2;
-      for (var k = 0; k < 4; k++) {
-        var a = wheelSpin + k * Math.PI / 2;
-        ctx.beginPath(); ctx.moveTo(wx, wyy);
-        ctx.lineTo(wx + Math.cos(a) * r * 0.8, wyy + Math.sin(a) * r * 0.8); ctx.stroke();
-      }
-      ctx.restore();
-    }
-  }
-
-  function roundRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
   }
 
   // ---- ループ ----
@@ -733,7 +701,9 @@
   }
 
   resize();
+  prepareAssets();
   validateStageDefs();
+  loadStageProgress();
   buildStageButtons();
   buildLevel();   // スタートがめんの はいけい（ほしぞら）ように いちど つくる。ゴールは とおくで えがかれない
   requestAnimationFrame(frame);
